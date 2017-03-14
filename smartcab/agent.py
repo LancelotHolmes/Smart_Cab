@@ -23,7 +23,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set any additional class parameters as needed
-
+        self.t = 1       # training trials
 
     def reset(self, destination=None, testing=False):
         """ The reset function is called at the beginning of each trial.
@@ -43,7 +43,13 @@ class LearningAgent(Agent):
             self.epsilon = 0
             self.alpha = 0
         else:
-            self.epsilon -= 0.05
+            # if self.t < 101:
+            self.epsilon = 1. / (self.t**2)
+            # else:
+            #     self.epsilon = 1. / (self.t**2)
+            self.t += 1
+            # self.epsilon -= 0.01
+
 
         return None
 
@@ -147,9 +153,11 @@ class LearningAgent(Agent):
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
 
-        # self.Q[state][action] = reward + self.alpha * self.get_maxQ(state)
 
-        newState = self.build_state()     # get next state
+        # newState = self.build_state()     # get next state
+        next_waypoint = self.planner.next_waypoint()  # The next waypoint
+        next_inputs = self.env.sense(self)  # Visual input - intersection light and traffic
+        newState = (next_waypoint, next_inputs['light'], next_inputs['oncoming'], next_inputs['left'], next_inputs['right'])
         max_q_new = self.get_maxQ(state=newState)
         # max_q_new = max(self.Q[newState].values())
 
@@ -194,9 +202,10 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     learning = True
     #    * epsilon - continuous value for the exploration factor, default is 1
-    epsilon = 0.1
+    # epsilon = 0.1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent, learning=learning, epsilon=epsilon)
+    # agent = env.create_agent(LearningAgent, learning=learning, epsilon=epsilon)
+    agent = env.create_agent(LearningAgent, learning=learning)
     # agent = env.create_agent(LearningAgent(env, learning))
 
     ##############
@@ -217,8 +226,9 @@ def run():
     #   log_metrics  - set to True to log trial and simulation results to /logs
     log_metrics = True
     #   optimized    - set to True to change the default log file name
+    optimized = True
     # sim = Simulator(env)
-    sim = Simulator(env=env, update_delay=update_delay, display=display, log_metrics=log_metrics)
+    sim = Simulator(env=env, update_delay=update_delay, display=display, log_metrics=log_metrics, optimized=optimized)
     # sim = Simulator(env=env, update_delay=update_delay, display=display)
 
     # sim.update_delay = 0.01
@@ -228,10 +238,11 @@ def run():
     ##############
     # Run the simulator
     # Flags:
-    #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
+    #   tolerance  - epsilon tolerance before beginning testing, default is 0.05
+    tolerance = 0.0001
     #   n_test     - discrete number of testing trials to perform, default is 0
     n_test = 10
-    sim.run(n_test=n_test)
+    sim.run(tolerance=tolerance, n_test=n_test)
 
 
 if __name__ == '__main__':
