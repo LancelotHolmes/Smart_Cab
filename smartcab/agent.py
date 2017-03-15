@@ -23,7 +23,7 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Set any additional class parameters as needed
-        self.t = 1       # training trials
+        self.t = 0       # training trials
 
     def reset(self, destination=None, testing=False):
         """ The reset function is called at the beginning of each trial.
@@ -43,12 +43,17 @@ class LearningAgent(Agent):
             self.epsilon = 0
             self.alpha = 0
         else:
-            # if self.t < 101:
-            self.epsilon = 1. / (self.t**2)
+            # a = 0.95
+            # a = 0.97
+            a = 0.98
+            # self.epsilon = 1. / (self.t**2)
+            # self.epsilon = a ** (self.t)
+            # if self.t < 100:
+            #     self.epsilon = 1.
             # else:
-            #     self.epsilon = 1. / (self.t**2)
+            self.epsilon *= a
             self.t += 1
-            # self.epsilon -= 0.01
+            # self.epsilon -= 0.05
 
 
         return None
@@ -98,14 +103,11 @@ class LearningAgent(Agent):
         # When learning, check if the 'state' is not in the Q-table
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
-
-        if state not in self.Q.keys():
-            self.Q[state] = {}
-            # dct_action = {}
-            for action in self.valid_actions:
-                self.Q[state][action] = 0.0
-                # dct_action[action] = 0.0
-            # self.Q[state] = dct_action
+        if self.learning is True:
+            if state not in self.Q.keys():
+                self.Q[state] = {}
+                for action in self.valid_actions:
+                    self.Q[state][action] = 0.0
         return
 
 
@@ -130,15 +132,15 @@ class LearningAgent(Agent):
         elif random.random() < self.epsilon:
             action = random.choice(self.valid_actions)
         else:
-            q = self.Q[state].values()
-            count = q.count(self.get_maxQ(state))
-            if count > 1:
-                best = [i for i in range(len(self.valid_actions)) if q[i] == self.get_maxQ(state)]
-                i = random.choice(best)
-            else:
-                i = q.index(self.get_maxQ(state))
-            action = self.valid_actions[i]
-            # action = random.choice(act for act in self.Q[state] if self.Q[state][act] == self.get_maxQ(state))
+            # q = self.Q[state].values()
+            # count = q.count(self.get_maxQ(state))
+            # if count > 1:
+            #     best = [i for i in range(len(self.valid_actions)) if q[i] == self.get_maxQ(state)]
+            #     i = random.choice(best)
+            # else:
+            #     i = q.index(self.get_maxQ(state))
+            # action = self.valid_actions[i]
+            action = random.choice([act for act, status in self.Q[state].items() if status == self.get_maxQ(state)])
         return action
 
 
@@ -152,20 +154,27 @@ class LearningAgent(Agent):
         ###########
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
+        # print 'the current state is: {}'.format(state)
+        # print "t:{}".format(self.t)
+        # print '\n'
 
-
+        # newReward = self.env.act(agent=self, action=action)
         # newState = self.build_state()     # get next state
-        next_waypoint = self.planner.next_waypoint()  # The next waypoint
-        next_inputs = self.env.sense(self)  # Visual input - intersection light and traffic
-        newState = (next_waypoint, next_inputs['light'], next_inputs['oncoming'], next_inputs['left'], next_inputs['right'])
-        max_q_new = self.get_maxQ(state=newState)
+        # next_waypoint = self.planner.next_waypoint()  # The next waypoint
+        # next_inputs = self.env.sense(self)  # Visual input - intersection light and traffic
+        # newState = (next_waypoint, next_inputs['light'], next_inputs['oncoming'], next_inputs['left'], next_inputs['right'])
+        # print 'the new state is: {}'.format(newState)
+        # print "t:{}".format(self.t)
+        # print '\n'
+        # max_q_new = self.get_maxQ(state=newState)
         # max_q_new = max(self.Q[newState].values())
 
         oldv = self.Q[state][action]
         if oldv is None:
             self.Q[state][action] = reward
         else:
-            self.Q[state][action] = oldv + self.alpha * (reward + max_q_new - oldv)
+            # self.Q[state][action] = oldv + self.alpha * (reward + max_q_new - oldv)
+            self.Q[state][action] = oldv + self.alpha * (reward - oldv)
 
         return
 
@@ -204,17 +213,19 @@ def run():
     #    * epsilon - continuous value for the exploration factor, default is 1
     # epsilon = 0.1
     #    * alpha   - continuous value for the learning rate, default is 0.5
+    alpha = 0.4
     # agent = env.create_agent(LearningAgent, learning=learning, epsilon=epsilon)
-    agent = env.create_agent(LearningAgent, learning=learning)
+    agent = env.create_agent(LearningAgent, learning=learning, alpha=alpha)
     # agent = env.create_agent(LearningAgent(env, learning))
 
     ##############
     # Follow the driving agent
     # Flags:
     #   enforce_deadline - set to True to enforce a deadline metric
-    env.set_primary_agent(agent)
+    enforce_deadline = True
+    env.set_primary_agent(agent, enforce_deadline)
 
-    env.enforce_deadline = True
+
 
     ##############
     # Create the simulation
