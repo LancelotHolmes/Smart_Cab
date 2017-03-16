@@ -24,6 +24,7 @@ class LearningAgent(Agent):
         ###########
         # Set any additional class parameters as needed
         self.t = 0       # training trials
+        # self.next_state = None
 
     def reset(self, destination=None, testing=False):
         """ The reset function is called at the beginning of each trial.
@@ -46,6 +47,8 @@ class LearningAgent(Agent):
             # a = 0.95
             # a = 0.97
             a = 0.98
+            # a = 0.8
+            # a = 0.9
             # self.epsilon = 1. / (self.t**2)
             # self.epsilon = a ** (self.t)
             # if self.t < 100:
@@ -55,6 +58,7 @@ class LearningAgent(Agent):
             self.t += 1
             # self.epsilon -= 0.05
 
+        # self.next_state = None
 
         return None
 
@@ -86,10 +90,10 @@ class LearningAgent(Agent):
         ## TO DO ##
         ###########
         # Calculate the maximum Q-value of all actions for a given state
-        if state not in self.Q.keys():
-            maxQ = 0.0
-        else:
-            maxQ = max(self.Q[state].values())
+        # if state not in self.Q.keys():
+        #     maxQ = 0.0
+        # else:
+        maxQ = max(self.Q[state].values())
 
         return maxQ 
 
@@ -154,19 +158,20 @@ class LearningAgent(Agent):
         ###########
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
+
         # print 'the current state is: {}'.format(state)
         # print "t:{}".format(self.t)
         # print '\n'
-
         # newReward = self.env.act(agent=self, action=action)
-        # newState = self.build_state()     # get next state
+        # self.next_state = self.build_state()     # get next state
+        # self.createQ(self.next_state)  # Create 'newState' in Q-table
         # next_waypoint = self.planner.next_waypoint()  # The next waypoint
         # next_inputs = self.env.sense(self)  # Visual input - intersection light and traffic
         # newState = (next_waypoint, next_inputs['light'], next_inputs['oncoming'], next_inputs['left'], next_inputs['right'])
         # print 'the new state is: {}'.format(newState)
         # print "t:{}".format(self.t)
         # print '\n'
-        # max_q_new = self.get_maxQ(state=newState)
+        # max_q_new = self.get_maxQ(state=self.next_state)
         # max_q_new = max(self.Q[newState].values())
 
         oldv = self.Q[state][action]
@@ -213,8 +218,9 @@ def run():
     #    * epsilon - continuous value for the exploration factor, default is 1
     # epsilon = 0.1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    alpha = 0.4
+    alpha = 0.45
     # agent = env.create_agent(LearningAgent, learning=learning, epsilon=epsilon)
+    # agent = env.create_agent(LearningAgent, learning=learning)
     agent = env.create_agent(LearningAgent, learning=learning, alpha=alpha)
     # agent = env.create_agent(LearningAgent(env, learning))
 
@@ -239,6 +245,7 @@ def run():
     #   optimized    - set to True to change the default log file name
     optimized = True
     # sim = Simulator(env)
+    # sim = Simulator(env=env, update_delay=update_delay, display=display, log_metrics=log_metrics)
     sim = Simulator(env=env, update_delay=update_delay, display=display, log_metrics=log_metrics, optimized=optimized)
     # sim = Simulator(env=env, update_delay=update_delay, display=display)
 
@@ -253,6 +260,7 @@ def run():
     tolerance = 0.0001
     #   n_test     - discrete number of testing trials to perform, default is 0
     n_test = 10
+    # sim.run(n_test=n_test)
     sim.run(tolerance=tolerance, n_test=n_test)
 
 
