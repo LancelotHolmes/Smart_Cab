@@ -46,15 +46,17 @@ class LearningAgent(Agent):
         else:
             # a = 0.95
             # a = 0.97
-            a = 0.98
+            a = 0.99
             # a = 0.8
             # a = 0.9
             # self.epsilon = 1. / (self.t**2)
+            # self.epsilon = math.cos(0.01 * self.t)
             # self.epsilon = a ** (self.t)
-            # if self.t < 100:
-            #     self.epsilon = 1.
-            # else:
-            self.epsilon *= a
+            if self.t < 200:
+                self.epsilon = 1.
+            else:
+                self.epsilon *= a
+
             self.t += 1
             # self.epsilon -= 0.05
 
@@ -107,11 +109,13 @@ class LearningAgent(Agent):
         # When learning, check if the 'state' is not in the Q-table
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
-        if self.learning is True:
-            if state not in self.Q.keys():
-                self.Q[state] = {}
-                for action in self.valid_actions:
-                    self.Q[state][action] = 0.0
+        # if self.learning is True:
+        #     if state not in self.Q.keys():
+        #         self.Q[state] = {}
+        #         for action in self.valid_actions:
+        #             self.Q[state][action] = 0.0
+        if self.learning:
+            self.Q.setdefault(state, {action: 0.0 for action in self.valid_actions})
         return
 
 
@@ -133,18 +137,19 @@ class LearningAgent(Agent):
 
         if self.learning is False:
             action = random.choice(self.valid_actions)
-        elif random.random() < self.epsilon:
-            action = random.choice(self.valid_actions)
         else:
-            # q = self.Q[state].values()
-            # count = q.count(self.get_maxQ(state))
-            # if count > 1:
-            #     best = [i for i in range(len(self.valid_actions)) if q[i] == self.get_maxQ(state)]
-            #     i = random.choice(best)
-            # else:
-            #     i = q.index(self.get_maxQ(state))
-            # action = self.valid_actions[i]
-            action = random.choice([act for act, status in self.Q[state].items() if status == self.get_maxQ(state)])
+            if random.random() < self.epsilon:
+                action = random.choice(self.valid_actions)
+            else:
+                # q = self.Q[state].values()
+                # count = q.count(self.get_maxQ(state))
+                # if count > 1:
+                #     best = [i for i in range(len(self.valid_actions)) if q[i] == self.get_maxQ(state)]
+                #     i = random.choice(best)
+                # else:
+                #     i = q.index(self.get_maxQ(state))
+                # action = self.valid_actions[i]
+                action = random.choice([act for act, status in self.Q[state].items() if status == self.get_maxQ(state)])
         return action
 
 
@@ -175,11 +180,12 @@ class LearningAgent(Agent):
         # max_q_new = max(self.Q[newState].values())
 
         oldv = self.Q[state][action]
-        if oldv is None:
-            self.Q[state][action] = reward
-        else:
+        # if oldv is None:
+        #     self.Q[state][action] = reward
+        # else:
             # self.Q[state][action] = oldv + self.alpha * (reward + max_q_new - oldv)
-            self.Q[state][action] = oldv + self.alpha * (reward - oldv)
+            # self.Q[state][action] = oldv + self.alpha * (reward - oldv)
+        self.Q[state][action] = oldv + self.alpha * (reward - oldv)
 
         return
 
@@ -218,7 +224,7 @@ def run():
     #    * epsilon - continuous value for the exploration factor, default is 1
     # epsilon = 0.1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    alpha = 0.45
+    alpha = 0.55
     # agent = env.create_agent(LearningAgent, learning=learning, epsilon=epsilon)
     # agent = env.create_agent(LearningAgent, learning=learning)
     agent = env.create_agent(LearningAgent, learning=learning, alpha=alpha)
@@ -237,7 +243,7 @@ def run():
     # Create the simulation
     # Flags:
     #   update_delay - continuous time (in seconds) between actions, default is 2.0 seconds
-    update_delay = 0.01
+    update_delay = 0.001
     #   display      - set to False to disable the GUI if PyGame is enabled
     display = False
     #   log_metrics  - set to True to log trial and simulation results to /logs
